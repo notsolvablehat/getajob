@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
     DATABASE_DIRECT_URL: str
+    # Auth
+    NEON_AUTH_BASE_URL: str = ""
 
     # Appwrite
     APPWRITE_PROJECT_ID: str

@@ -38,7 +38,7 @@ GetaJob is an automated job application dashboard that simplifies and automates 
 # Phases that are to be followed to build the above
 Phase 1 → Database Schema (Done)
 Phase 2 → FastAPI Project Setup + Config (Done)
-Phase _ → Auth (JWT + Refresh Tokens) (skipped, using Neon's Auth)
+Phase _ → Auth (JWT + Refresh Tokens) (skipped, using [Neon's Auth](https://neon.com/docs/auth/overview))
 Phase 3 → Candidate Profile API
 Phase 4 → Resume Upload (disk → Appwrite later)
 Phase 5 → Job Scraper (httpx + Greenhouse API)
