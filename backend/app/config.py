@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     APPWRITE_API_KEY: str
     APPWRITE_BUCKET_ID: str
 
+    # Automation
+    PLAYWRIGHT_HEADLESS: bool = False
+    PLAYWRIGHT_DEBUG_MODE: bool = True
+    RESUME_STORAGE_DIR: str = "user-data/resumes"
+
     # Application
     APP_ENV: str = "development"
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]

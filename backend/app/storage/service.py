@@ -39,3 +39,13 @@ def get_file_url(file_id: str) -> str:
     Returns the view URL for a file.
     """
     return f"{settings.APPWRITE_API}/storage/buckets/{settings.APPWRITE_BUCKET_ID}/files/{file_id}/view?project={settings.APPWRITE_PROJECT_ID}"
+
+
+def download_file_bytes(file_id: str) -> bytes:
+    """
+    Downloads a file from Appwrite storage using the SDK (authenticated).
+    """
+    return storage.get_file_download(
+        bucket_id=settings.APPWRITE_BUCKET_ID,
+        file_id=file_id,
+    )
