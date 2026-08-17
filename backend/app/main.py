@@ -7,6 +7,7 @@ from app.auth.router import router as auth_router
 from app.candidate.router import router as candidate_router
 from app.config import settings
 from app.database import close_db_pool, init_db_pool
+from app.scraper.router import router as scraper_router
 
 
 @asynccontextmanager
@@ -41,3 +42,4 @@ async def health_check():
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(candidate_router, prefix="/api/candidate", tags=["Candidate"])
+app.include_router(scraper_router, prefix="/api/scraper", tags=["Scraper"])

@@ -33,12 +33,21 @@ async def register_user(user: UserRegister):
     """
     _check_auth_configured()
     url = f"{settings.NEON_AUTH_BASE_URL}/sign-up/email"
-    async with httpx.AsyncClient() as client:
-        res = await client.post(
-            url,
-            json={"email": user.email, "password": user.password, "name": user.name},
-            headers={"Origin": _get_fake_origin()},
-        )
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        try:
+            res = await client.post(
+                url,
+                json={
+                    "email": user.email,
+                    "password": user.password,
+                    "name": user.name,
+                },
+                headers={"Origin": _get_fake_origin()},
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=504, detail=f"Neon Auth timeout/connection error: {e!s}"
+            )
         if res.status_code >= 400:
             raise HTTPException(status_code=res.status_code, detail=res.text)
         return res.json()
@@ -57,14 +66,20 @@ async def login_for_access_token(
     _check_auth_configured()
     fake_origin = _get_fake_origin()
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=15.0) as client:
         # Step 1: Sign in to get a session cookie
         sign_in_url = f"{settings.NEON_AUTH_BASE_URL}/sign-in/email"
-        sign_in_res = await client.post(
-            sign_in_url,
-            json={"email": form_data.username, "password": form_data.password},
-            headers={"Origin": fake_origin},
-        )
+        try:
+            sign_in_res = await client.post(
+                sign_in_url,
+                json={"email": form_data.username, "password": form_data.password},
+                headers={"Origin": fake_origin},
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=504,
+                detail=f"Neon Auth timeout/connection error during sign-in: {e!s}",
+            )
 
         if sign_in_res.status_code >= 400:
             raise HTTPException(
@@ -76,11 +91,17 @@ async def login_for_access_token(
         # Step 2: Use the session cookie to get the JWT from Neon's /token endpoint
         session_cookies = sign_in_res.cookies
         token_url = f"{settings.NEON_AUTH_BASE_URL}/token"
-        token_res = await client.get(
-            token_url,
-            cookies=session_cookies,
-            headers={"Origin": fake_origin},
-        )
+        try:
+            token_res = await client.get(
+                token_url,
+                cookies=session_cookies,
+                headers={"Origin": fake_origin},
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(
+                status_code=504,
+                detail=f"Neon Auth timeout/connection error during token fetch: {e!s}",
+            )
 
         if token_res.status_code >= 400:
             raise HTTPException(

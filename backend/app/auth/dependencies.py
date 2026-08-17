@@ -18,12 +18,17 @@ async def get_jwks() -> list:
     if not jwks_cache:
         # Neon Auth JWKS is at {base_url}/.well-known/jwks.json
         jwks_url = f"{settings.NEON_AUTH_BASE_URL}/.well-known/jwks.json"
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             try:
                 response = await client.get(jwks_url)
                 response.raise_for_status()
                 data = response.json()
                 jwks_cache = data.get("keys", [])
+            except httpx.RequestError as e:
+                raise HTTPException(
+                    status_code=504,
+                    detail=f"Neon Auth JWKS timeout/connection error: {e}",
+                )
             except Exception as e:
                 raise HTTPException(
                     status_code=500, detail=f"Could not fetch JWKS: {e}"
