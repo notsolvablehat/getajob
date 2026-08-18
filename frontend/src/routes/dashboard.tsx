@@ -67,7 +67,7 @@ function DashboardPage() {
   const [isAutomating, setIsAutomating] = useState(false);
 
   // Queries
-  const { data: jobsData, isLoading: jobsLoading } = useJobs({ page, size: 10, company: filterCompany });
+  const { data: jobsData, isLoading: jobsLoading } = useJobs({ page, size: 10, company: filterCompany, sortBy });
   const { data: companies = [] } = useCompanies();
   const jobs = jobsData?.items ?? [];
   const totalCount = jobsData?.total ?? 0;

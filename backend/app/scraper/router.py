@@ -39,6 +39,7 @@ async def list_jobs(
     company: str | None = None,
     page: int = 1,
     size: int = 10,
+    sort_by: str = "updated_at_desc",
     user_id: str = Depends(get_current_user),
     conn: Connection = Depends(get_db_connection),
 ):
@@ -48,7 +49,7 @@ async def list_jobs(
     """
     limit = size
     offset = (page - 1) * size
-    jobs, total = await service.get_user_jobs(conn, user_id, company, limit, offset)
+    jobs, total = await service.get_user_jobs(conn, user_id, company, limit, offset, sort_by)
     pages = ceil(total / size) if size > 0 else 0
     return PaginatedJobsResponse(
         items=jobs, total=total, page=page, size=size, pages=pages

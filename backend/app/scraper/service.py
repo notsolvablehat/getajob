@@ -118,18 +118,25 @@ async def get_user_jobs(
     company: str | None = None,
     limit: int = 10,
     offset: int = 0,
+    sort_by: str = "updated_at_desc",
 ) -> tuple[list[dict], int]:
     """
     Retrieves jobs associated with a specific user, with pagination and optional company filter.
     """
+    if sort_by == "scraped_at_desc":
+        order_clause = "ORDER BY scraped_at DESC"
+    elif sort_by == "updated_at_asc":
+        order_clause = "ORDER BY updated_at ASC"
+    else:
+        order_clause = "ORDER BY updated_at DESC"
     if company:
         count_query = "SELECT COUNT(*) FROM jobs WHERE user_id = $1 AND company = $2"
         total = await conn.fetchval(count_query, user_id, company)
 
-        query = """
+        query = f"""
             SELECT * FROM jobs
             WHERE user_id = $1 AND company = $2
-            ORDER BY scraped_at DESC
+            {order_clause}
             LIMIT $3 OFFSET $4
         """
         records = await conn.fetch(query, user_id, company, limit, offset)
@@ -137,10 +144,10 @@ async def get_user_jobs(
         count_query = "SELECT COUNT(*) FROM jobs WHERE user_id = $1"
         total = await conn.fetchval(count_query, user_id)
 
-        query = """
+        query = f"""
             SELECT * FROM jobs
             WHERE user_id = $1
-            ORDER BY scraped_at DESC
+            {order_clause}
             LIMIT $2 OFFSET $3
         """
         records = await conn.fetch(query, user_id, limit, offset)

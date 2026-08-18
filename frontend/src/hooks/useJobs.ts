@@ -38,6 +38,7 @@ export interface JobFilters {
   company?: string;
   page?: number;
   size?: number;
+  sortBy?: "updated_at_desc" | "scraped_at_desc" | "updated_at_asc";
 }
 
 export const JOBS_QUERY_KEY = ["jobs"] as const;
@@ -47,6 +48,7 @@ export function useJobs(filters: JobFilters = {}) {
   if (filters.company) params.set("company", filters.company);
   params.set("page", String(filters.page ?? 1));
   params.set("size", String(filters.size ?? 10));
+  if (filters.sortBy) params.set("sort_by", filters.sortBy);
 
   return useQuery({
     queryKey: [...JOBS_QUERY_KEY, filters],
