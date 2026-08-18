@@ -41,9 +41,9 @@ Phase 2 → FastAPI Project Setup + Config (Done)
 Phase _ → Auth (JWT + Refresh Tokens) (skipped, using [Neon's Auth](https://neon.com/docs/auth/overview))
 Phase 3 → Candidate Profile API (Done)
 Phase 4 → Resume Upload (disk → Appwrite later) (Done)
-Phase 5 → Job Scraper (httpx + Greenhouse API)
-Phase 6 → Scraping API endpoint
+Phase 5 → Job Scraper (httpx + Greenhouse API) (Done)
+Phase 6 → Scraping API endpoint (Done)
 Phase 7 → Playwright Automation Engine
-Phase 8 → Apply API (single + apply-all)
-Phase 9 → Screenshots (save to disk → Appwrite later)
+Phase 8 → Apply API (single + apply-all) (Done)
+Phase 9 → Screenshots (save to disk → Appwrite later) (Done)
 Phase 10 → Frontend (React/Next.js)
