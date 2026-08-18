@@ -29,8 +29,9 @@ export function useApplySingle() {
   return useMutation({
     mutationFn: (jobId: string) =>
       api.post<ApplyResult>(`/api/apply/${jobId}`),
-    onSuccess: () => {
+    onSuccess: (_, jobId) => {
       queryClient.invalidateQueries({ queryKey: JOBS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ["job", jobId] });
     },
   });
 }
