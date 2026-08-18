@@ -1,9 +1,22 @@
 import asyncio
+import re
 
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright.async_api import async_playwright
 
 from app.automation.form_filler import fill_greenhouse_form
+
+# Phrases that indicate a job posting is no longer available.
+# Checked case-insensitively against the full page body text.
+_CLOSED_JOB_PATTERN = re.compile(
+    r"job is no longer available"
+    r"|this job is not accepting applications"
+    r"|posting no longer available"
+    r"|job listing has expired"
+    r"|position has been filled"
+    r"|sorry, this job has expired",
+    re.IGNORECASE,
+)
 
 
 async def apply_to_job(
@@ -36,6 +49,22 @@ async def apply_to_job(
 
             # Allow page to settle
             await asyncio.sleep(2)
+
+            # ── Early-exit: detect closed / expired job postings ──────────────
+            try:
+                body_text = await asyncio.wait_for(
+                    page.inner_text("body"),
+                    timeout=5.0,
+                )
+                match = _CLOSED_JOB_PATTERN.search(body_text)
+                if match:
+                    result["failure_reason"] = (
+                        f'Job was no longer open — "{match.group(0)}"'
+                    )
+                    return result
+            except asyncio.TimeoutError:
+                pass  # Could not read body in 5 s; continue anyway
+            # ─────────────────────────────────────────────────────────────────
 
             from app.config import settings
             if getattr(settings, "PLAYWRIGHT_DEBUG_MODE", False):

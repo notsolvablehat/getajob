@@ -1,4 +1,4 @@
-import { getToken } from "@/lib/auth";
+import { getToken, clearToken } from "@/lib/auth";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
@@ -35,6 +35,13 @@ async function request<T>(
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      clearToken();
+      if (window.location.pathname !== "/auth") {
+        window.location.href = "/auth";
+      }
+    }
+
     let message = `HTTP ${res.status}`;
     try {
       const data = await res.json();
@@ -68,4 +75,14 @@ export const api = {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ username: email, password }),
     }),
+
+  downloadFile: async (path: string) => {
+    const token = getToken();
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    
+    const res = await fetch(`${BASE_URL}${path}`, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.blob();
+  },
 };

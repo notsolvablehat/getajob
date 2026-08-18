@@ -70,7 +70,6 @@ export function EmptyState({ onScrapeClick }: EmptyStateProps) {
           "Screenshot captured as proof — nothing submitted",
         ].map((label, i) => (
           <div key={i} className="relative flex flex-1 flex-col items-center gap-2 px-3">
-            {/* Connector lines */}
             {i < 2 && (
               <div
                 className="absolute right-0 top-[14px] h-px bg-white/[0.11]"
@@ -140,6 +139,13 @@ interface JobListProps {
   onApply: (jobId: string) => void;
   filterStatus: JobStatus | "ALL";
   search: string;
+  filterCompany: string;
+  filterLocation: string;
+  sortBy: "updated_at_desc" | "scraped_at_desc" | "updated_at_asc";
+  // Selection mode
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (jobId: string) => void;
 }
 
 export function JobList({
@@ -148,17 +154,38 @@ export function JobList({
   onApply,
   filterStatus,
   search,
+  filterCompany,
+  filterLocation,
+  sortBy,
+  selectionMode = false,
+  selectedIds = new Set(),
+  onToggleSelect,
 }: JobListProps) {
-  const filtered = jobs.filter((job) => {
-    const matchesStatus =
-      filterStatus === "ALL" || job.status === filterStatus;
+  // 1. filter
+  let filtered = jobs.filter((job) => {
+    const matchesStatus = filterStatus === "ALL" || job.status === filterStatus;
     const q = search.toLowerCase();
     const matchesSearch =
       !q ||
       job.title.toLowerCase().includes(q) ||
       job.company.toLowerCase().includes(q) ||
-      job.location.toLowerCase().includes(q);
-    return matchesStatus && matchesSearch;
+      (job.location ?? "").toLowerCase().includes(q);
+    const matchesCompany =
+      !filterCompany || job.company.toLowerCase() === filterCompany.toLowerCase();
+    const matchesLocation =
+      !filterLocation ||
+      (job.location ?? "").toLowerCase().includes(filterLocation.toLowerCase());
+    return matchesStatus && matchesSearch && matchesCompany && matchesLocation;
+  });
+
+  // 2. sort
+  filtered = [...filtered].sort((a, b) => {
+    if (sortBy === "updated_at_desc")
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    if (sortBy === "updated_at_asc")
+      return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+    // scraped_at_desc
+    return new Date(b.scraped_at).getTime() - new Date(a.scraped_at).getTime();
   });
 
   if (filtered.length === 0) {
@@ -172,6 +199,8 @@ export function JobList({
     );
   }
 
+  const maxSelected = selectedIds.size >= 5;
+
   return (
     <div
       className="overflow-hidden rounded-[14px] border border-white/[0.07]"
@@ -184,6 +213,10 @@ export function JobList({
           job={job}
           onApply={onApply}
           isApplying={applyingJobIds.has(job.id)}
+          selectionMode={selectionMode}
+          selected={selectedIds.has(job.id)}
+          selectionDisabled={maxSelected && !selectedIds.has(job.id)}
+          onToggle={onToggleSelect}
         />
       ))}
     </div>

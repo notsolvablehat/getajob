@@ -1,60 +1,139 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
-  Home,
   LayoutGrid,
   User,
-  Play,
+  Zap,
   RefreshCw,
   Loader2,
   LogOut,
   UserCircle,
+  CheckSquare,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { clearToken } from "@/lib/auth";
+import { getTaskId } from "@/lib/taskStorage";
 import { useState, useRef, useEffect } from "react";
 
 interface NavbarProps {
+  // Scrape
   onScrapeClick?: () => void;
-  onApplyAllClick?: () => void;
   isScraping?: boolean;
-  isApplying?: boolean;
+  // Selection / automate flow
   hasJobs?: boolean;
+  selectionMode?: boolean;
+  selectedCount?: number;
+  onEnterSelectionMode?: () => void;
+  onCancelSelection?: () => void;
+  onAutomateSelected?: () => void;
+  isAutomating?: boolean;
 }
 
-const navLinks = [
-  { to: "/" as const, label: "Home", icon: Home },
+const BASE_NAV = [
   { to: "/dashboard" as const, label: "Dashboard", icon: LayoutGrid },
   { to: "/profile" as const, label: "Profile", icon: User },
 ];
 
 export function Navbar({
   onScrapeClick,
-  onApplyAllClick,
   isScraping = false,
-  isApplying = false,
   hasJobs = false,
+  selectionMode = false,
+  selectedCount = 0,
+  onEnterSelectionMode,
+  onCancelSelection,
+  onAutomateSelected,
+  isAutomating = false,
 }: NavbarProps) {
   const location = useLocation();
   const [avatarOpen, setAvatarOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Check if there's an active automation task in localStorage
+  const [hasActiveTask, setHasActiveTask] = useState(false);
+  useEffect(() => {
+    setHasActiveTask(!!getTaskId());
+    // Re-check on storage events (other tabs)
+    const handler = () => setHasActiveTask(!!getTaskId());
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+  }, []);
 
   function handleLogout() {
     clearToken();
     window.location.href = "/auth";
   }
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setAvatarOpen(false);
       }
     }
-    if (avatarOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    if (avatarOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [avatarOpen]);
+
+  // Button config based on selection state
+  const actionButton = (() => {
+    if (!hasJobs || !onEnterSelectionMode) return null;
+
+    if (!selectionMode) {
+      return (
+        <Button
+          size="sm"
+          onClick={onEnterSelectionMode}
+          disabled={isScraping}
+          className="h-[30px] gap-1.5 rounded-full bg-[#7c6fff] px-3 text-[12px] text-white hover:bg-[#8c7fff] disabled:opacity-40"
+          style={{ boxShadow: "0 2px 12px rgba(124,111,255,0.25)" }}
+        >
+          <CheckSquare size={12} />
+          Apply to All
+        </Button>
+      );
+    }
+
+    if (selectedCount === 0) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-[12px] text-[#7a7a85]">Select up to 5 jobs</span>
+          <button
+            onClick={onCancelSelection}
+            className="flex h-[30px] items-center gap-1 rounded-full border border-white/[0.11] bg-[#212126] px-2.5 text-[12px] text-[#7a7a85] hover:text-[#ececec]"
+          >
+            <X size={12} />
+            Cancel
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={onAutomateSelected}
+          disabled={isAutomating}
+          className="h-[30px] gap-1.5 rounded-full bg-[#7c6fff] px-3 text-[12px] text-white hover:bg-[#8c7fff]"
+          style={{ boxShadow: "0 2px 12px rgba(124,111,255,0.25)" }}
+        >
+          {isAutomating ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Zap size={12} />
+          )}
+          Automate {selectedCount} Job{selectedCount !== 1 ? "s" : ""}
+        </Button>
+        <button
+          onClick={onCancelSelection}
+          className="flex h-[30px] items-center gap-1 rounded-full border border-white/[0.11] bg-[#212126] px-2.5 text-[12px] text-[#7a7a85] hover:text-[#ececec]"
+        >
+          <X size={12} />
+          Cancel
+        </button>
+      </div>
+    );
+  })();
 
   return (
     <nav
@@ -78,7 +157,7 @@ export function Navbar({
 
       {/* Nav links */}
       <div className="flex flex-1 items-center gap-1">
-        {navLinks.map(({ to, label, icon: Icon }) => {
+        {BASE_NAV.map(({ to, label, icon: Icon }) => {
           const isActive = location.pathname === to;
           return (
             <Link
@@ -90,28 +169,44 @@ export function Navbar({
                   : "text-[#7a7a85] hover:bg-[#212126] hover:text-[#ececec]"
               }`}
             >
-              <Icon
-                size={14}
-                className={isActive ? "opacity-100" : "opacity-60"}
-              />
+              <Icon size={14} className={isActive ? "opacity-100" : "opacity-60"} />
               {label}
             </Link>
           );
         })}
 
-        {/* Automations — coming soon */}
-        <div className="relative group">
-          <button
-            disabled
-            className="flex cursor-not-allowed items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-[450] text-[#4a4a55] opacity-50"
+        {/* Automations tab */}
+        {hasActiveTask ? (
+          <Link
+            to="/automations"
+            className={`relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-[450] transition-colors duration-150 ${
+              location.pathname === "/automations"
+                ? "bg-[#212126] text-[#ececec]"
+                : "text-[#7a7a85] hover:bg-[#212126] hover:text-[#ececec]"
+            }`}
           >
-            <Play size={14} className="opacity-60" />
+            <Zap size={14} className="opacity-80" />
             Automations
-          </button>
-          <div className="pointer-events-none absolute left-1/2 top-full mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#1a1a1d] px-2.5 py-1 text-[11px] text-[#7a7a85] opacity-0 transition-opacity group-hover:opacity-100">
-            Coming soon
+            {/* Live pulse badge */}
+            <span
+              className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#7c6fff]"
+              style={{ animation: "gaj-blink 1.4s ease-in-out infinite" }}
+            />
+          </Link>
+        ) : (
+          <div className="relative group">
+            <button
+              disabled
+              className="flex cursor-not-allowed items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-[450] text-[#4a4a55] opacity-50"
+            >
+              <Zap size={14} className="opacity-60" />
+              Automations
+            </button>
+            <div className="pointer-events-none absolute left-1/2 top-full mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#1a1a1d] px-2.5 py-1 text-[11px] text-[#7a7a85] opacity-0 transition-opacity group-hover:opacity-100">
+              No automation is currently running
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Right side */}
@@ -122,8 +217,8 @@ export function Navbar({
             variant="outline"
             size="sm"
             onClick={onScrapeClick}
-            disabled={isScraping}
-            className="h-[30px] gap-1.5 rounded-full border-white/[0.11] bg-[#212126] px-3 text-[12px] text-[#7a7a85] hover:bg-[#1a1a1d] hover:text-[#ececec]"
+            disabled={isScraping || selectionMode}
+            className="h-[30px] gap-1.5 rounded-full border-white/[0.11] bg-[#212126] px-3 text-[12px] text-[#7a7a85] hover:bg-[#1a1a1d] hover:text-[#ececec] disabled:opacity-40"
           >
             {isScraping ? (
               <Loader2 size={12} className="animate-spin" />
@@ -134,29 +229,8 @@ export function Navbar({
           </Button>
         )}
 
-        {/* Apply to All */}
-        {onApplyAllClick && (
-          <Button
-            size="sm"
-            onClick={onApplyAllClick}
-            disabled={!hasJobs || isScraping || isApplying}
-            className="h-[30px] gap-1.5 rounded-full px-3 text-[12px] disabled:cursor-not-allowed disabled:opacity-40"
-            style={{
-              background: hasJobs && !isScraping ? "#7c6fff" : undefined,
-              boxShadow:
-                hasJobs && !isScraping
-                  ? "0 2px 12px rgba(124,111,255,0.25)"
-                  : undefined,
-            }}
-          >
-            {isApplying ? (
-              <Loader2 size={12} className="animate-spin" />
-            ) : (
-              <Play size={12} />
-            )}
-            Apply to All
-          </Button>
-        )}
+        {/* Dynamic action button */}
+        {actionButton}
 
         {/* Avatar + dropdown */}
         <div ref={dropdownRef} className="relative">
@@ -194,6 +268,13 @@ export function Navbar({
           )}
         </div>
       </div>
+
+      <style>{`
+        @keyframes gaj-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.2; }
+        }
+      `}</style>
     </nav>
   );
 }

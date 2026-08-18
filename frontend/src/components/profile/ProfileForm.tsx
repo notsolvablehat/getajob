@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
 import { Loader2, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,22 +11,26 @@ interface ProfileFormProps {
   profile: CandidateProfile | undefined;
 }
 
+function profileToUpdate(p: CandidateProfile | undefined): ProfileUpdate {
+  return {
+    full_name: p?.full_name ?? "",
+    email: p?.email ?? "",
+    phone: p?.phone ?? "",
+    linkedin_url: p?.linkedin_url ?? "",
+    github_url: p?.github_url ?? "",
+    portfolio_url: p?.portfolio_url ?? "",
+    location: p?.location ?? "",
+    bio: p?.bio ?? "",
+    years_experience: p?.years_experience ?? undefined,
+    skills: p?.skills ?? [],
+  };
+}
+
 export function ProfileForm({ profile }: ProfileFormProps) {
   const updateProfile = useUpdateProfile();
+  const originalRef = useRef<ProfileUpdate>(profileToUpdate(profile));
 
-  const [form, setForm] = useState<ProfileUpdate>({
-    full_name: profile?.full_name ?? "",
-    email: profile?.email ?? "",
-    phone: profile?.phone ?? "",
-    linkedin_url: profile?.linkedin_url ?? "",
-    github_url: profile?.github_url ?? "",
-    portfolio_url: profile?.portfolio_url ?? "",
-    location: profile?.location ?? "",
-    bio: profile?.bio ?? "",
-    years_experience: profile?.years_experience ?? undefined,
-    skills: profile?.skills ?? [],
-  });
-
+  const [form, setForm] = useState<ProfileUpdate>(() => profileToUpdate(profile));
   const [skillInput, setSkillInput] = useState("");
 
   function set(field: keyof ProfileUpdate, value: unknown) {
@@ -51,8 +55,14 @@ export function ProfileForm({ profile }: ProfileFormProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Skip API if nothing changed
+    if (JSON.stringify(form) === JSON.stringify(originalRef.current)) {
+      toast.info("No changes to save.");
+      return;
+    }
     try {
       await updateProfile.mutateAsync(form);
+      originalRef.current = { ...form }; // update baseline
       toast.success("Profile saved!");
     } catch {
       toast.error("Failed to save profile.");

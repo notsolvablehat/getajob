@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Eye, EyeOff, Zap, Shield, Play } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail, Lock, ArrowRight, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,143 +17,203 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-function AuthPage() {
-  const [view, setView] = useState<"login" | "register">("login");
+// ── Floating job cards data ──────────────────────────────────────────────────
+const JOB_CARDS = [
+  { company: "Stripe", role: "Senior Backend Engineer", location: "San Francisco, CA", icon: "S", color: "#6772e5", rotation: -8, x: 4, y: 8, delay: 0 },
+  { company: "Vercel", role: "Full Stack Engineer", location: "Remote", icon: "▲", color: "#ececec", rotation: 6, x: 68, y: 6, delay: 3 },
+  { company: "Notion", role: "Software Engineer", location: "New York, NY", icon: "N", color: "#ececec", rotation: -5, x: 2, y: 42, delay: 5 },
+  { company: "Linear", role: "Product Engineer", location: "Remote", icon: "◆", color: "#5e6ad2", rotation: 7, x: 72, y: 38, delay: 1.5 },
+  { company: "Discord", role: "Backend Engineer", location: "Remote", icon: "D", color: "#5865f2", rotation: -6, x: 5, y: 74, delay: 7 },
+  { company: "GitHub", role: "Staff Engineer", location: "Remote", icon: "◯", color: "#ececec", rotation: 5, x: 70, y: 72, delay: 4 },
+];
 
+function FloatingJobCard({ card }: { card: typeof JOB_CARDS[0] }) {
   return (
-    <div className="flex min-h-screen" style={{ background: "#0d0d0f" }}>
-      {/* Left side — visual area */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-white/[0.07] p-10 lg:flex" style={{ background: "#141416" }}>
-        
-        {/* Glow effect */}
-        <div
-          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: "80%",
-            height: "80%",
-            background: "radial-gradient(ellipse at center, rgba(124,111,255,0.08) 0%, transparent 60%)",
-          }}
-        />
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-2">
-            <div
-              className="h-[7px] w-[7px] rounded-full bg-[#7c6fff]"
-              style={{ boxShadow: "0 0 8px rgba(124,111,255,0.4)" }}
-            />
-            <span className="text-[17px] font-semibold tracking-tight text-[#ececec]">
-              GetaJob
-            </span>
-          </div>
-        </div>
-
-        <div className="relative z-10 flex flex-col gap-6 max-w-md">
-          <h1 className="text-4xl font-semibold tracking-tight text-[#ececec] leading-tight">
-            Automate your job search.
-          </h1>
-          <p className="text-[#7a7a85] text-[15px] leading-relaxed">
-            Stop filling out the same forms over and over. Scrape jobs from Greenhouse, setup your profile once, and apply to dozens of jobs while you sleep.
-          </p>
-          
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,111,255,0.1)]">
-                <Zap size={14} className="text-[#7c6fff]" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-semibold text-[#ececec]">Lightning fast</span>
-                <span className="text-[12px] text-[#4a4a55]">Scrape jobs instantly</span>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(124,111,255,0.1)]">
-                <Shield size={14} className="text-[#7c6fff]" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-[13px] font-semibold text-[#ececec]">Safe & Secure</span>
-                <span className="text-[12px] text-[#4a4a55]">Review before submit</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10 text-[12px] text-[#4a4a55]">
-          © {new Date().getFullYear()} GetaJob
-        </div>
-      </div>
-
-      {/* Right side — form area */}
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-16 xl:px-24 relative overflow-hidden">
-        
-        {/* Mobile Logo */}
-        <div className="absolute top-8 left-8 flex items-center gap-2 lg:hidden">
+    <div
+      className="pointer-events-none absolute select-none"
+      style={{
+        left: `${card.x}%`,
+        top: `${card.y}%`,
+        rotate: `${card.rotation}deg`,
+        animation: `gaj-float-card 6s ease-in-out ${card.delay}s infinite alternate`,
+      }}
+    >
+      <div
+        className="flex min-w-[160px] flex-col gap-2 rounded-[12px] border p-3.5"
+        style={{
+          background: "rgba(20,20,22,0.55)",
+          borderColor: "rgba(255,255,255,0.09)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+          opacity: 0.45,
+        }}
+      >
+        {/* Company header */}
+        <div className="flex items-center gap-2">
           <div
-            className="h-[7px] w-[7px] rounded-full bg-[#7c6fff]"
-            style={{ boxShadow: "0 0 8px rgba(124,111,255,0.4)" }}
-          />
-          <span className="text-[17px] font-semibold tracking-tight text-[#ececec]">
-            GetaJob
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] text-[11px] font-bold"
+            style={{ background: "rgba(255,255,255,0.06)", color: card.color }}
+          >
+            {card.icon}
+          </div>
+          <span className="text-[13px] font-semibold text-[#c8c8d0]">
+            {card.company}
           </span>
         </div>
 
-        {/* Mobile Background glow */}
-        <div
-          className="pointer-events-none fixed left-1/2 top-0 -translate-x-1/2 lg:hidden"
-          style={{
-            width: 500,
-            height: 350,
-            background: "radial-gradient(ellipse at top, rgba(124,111,255,0.10) 0%, transparent 70%)",
-          }}
-        />
+        {/* Role */}
+        <p className="text-[11px] font-medium text-[#6a6a75]">{card.role}</p>
 
-        <div className="mx-auto w-full max-w-[360px] relative z-10">
-          <div className="mb-8">
-            <h2 className="text-[24px] font-semibold tracking-tight text-[#ececec]">
-              {view === "login" ? "Welcome back" : "Create an account"}
-            </h2>
-            <p className="mt-2 text-[13px] text-[#7a7a85]">
-              {view === "login"
-                ? "Log in to your account to continue your automated job search."
-                : "Enter your details below to create your account and get started."}
-            </p>
-          </div>
-
-          <div className="w-full">
-            {view === "login" ? <LoginForm /> : <RegisterForm />}
-          </div>
-
-          <div className="mt-8 text-center text-[13px] text-[#7a7a85]">
-            {view === "login" ? (
-              <p>
-                Don't have an account?{" "}
-                <button
-                  onClick={() => setView("register")}
-                  className="font-medium text-[#7c6fff] hover:text-[#8c7fff] hover:underline"
-                >
-                  Sign up
-                </button>
-              </p>
-            ) : (
-              <p>
-                Already have an account?{" "}
-                <button
-                  onClick={() => setView("login")}
-                  className="font-medium text-[#7c6fff] hover:text-[#8c7fff] hover:underline"
-                >
-                  Log in
-                </button>
-              </p>
-            )}
-          </div>
+        {/* Location */}
+        <div className="flex items-center gap-1 text-[10px] text-[#4a4a55]">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M12 2C8.686 2 6 4.686 6 8c0 5.25 6 14 6 14s6-8.75 6-14c0-3.314-2.686-6-6-6z"/>
+            <circle cx="12" cy="8" r="2"/>
+          </svg>
+          {card.location}
         </div>
       </div>
     </div>
   );
 }
 
+// ── Terminal header dots ─────────────────────────────────────────────────────
+function TerminalHeader() {
+  const [cursorVisible, setCursorVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCursorVisible((v) => !v);
+    }, 530);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div
+      className="flex items-center gap-3 border-b px-5 py-3"
+      style={{ borderColor: "rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.02)" }}
+    >
+      {/* Traffic light dots */}
+      <div className="flex items-center gap-1.5">
+        <div className="h-2.5 w-2.5 rounded-full bg-[#ff5f57] opacity-70" />
+        <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e] opacity-70" />
+        <div className="h-2.5 w-2.5 rounded-full bg-[#28c840] opacity-70" />
+      </div>
+
+      {/* Command */}
+      <span className="flex-1 text-center font-mono text-[12px] text-[#7a7a85]">
+        <span className="text-[#7c6fff]">$ </span>
+        getajob --auth
+        <span
+          className="ml-0.5 inline-block h-[13px] w-[7px] translate-y-[1px] rounded-[1px] bg-[#7c6fff]"
+          style={{ opacity: cursorVisible ? 1 : 0, transition: "opacity 0.1s" }}
+        />
+      </span>
+    </div>
+  );
+}
+
+// ── Stats ticker ─────────────────────────────────────────────────────────────
+function StatsTicker() {
+  return (
+    <div
+      className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-8 border-t px-6 py-3"
+      style={{
+        background: "rgba(13,13,15,0.80)",
+        borderColor: "rgba(255,255,255,0.07)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
+    >
+      <TrendingUp size={13} className="text-[#7c6fff] shrink-0" />
+      <span className="text-[12px] text-[#4a4a55]">
+        <span className="font-semibold tabular-nums text-[#ececec]">3,241</span>
+        {" "}jobs applied
+      </span>
+      <span className="h-[3px] w-[3px] rounded-full bg-[#4a4a55]" />
+      <span className="text-[12px] text-[#4a4a55]">
+        <span className="font-semibold tabular-nums text-[#ececec]">148</span>
+        {" "}companies
+      </span>
+      <span className="h-[3px] w-[3px] rounded-full bg-[#4a4a55]" />
+      <span className="flex items-center gap-1.5 text-[12px] text-[#4a4a55]">
+        Keep going
+        <span
+          className="h-1.5 w-1.5 rounded-full bg-[#34d399]"
+          style={{ animation: "gaj-blink-dot 1.5s ease-in-out infinite" }}
+        />
+      </span>
+    </div>
+  );
+}
+
+// ── Main auth page ───────────────────────────────────────────────────────────
+function AuthPage() {
+  const [view, setView] = useState<"login" | "register">("login");
+
+  return (
+    <div
+      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden"
+      style={{ background: "#0a0a0c" }}
+    >
+      {/* Floating job cards in background */}
+      {JOB_CARDS.map((card) => (
+        <FloatingJobCard key={card.company} card={card} />
+      ))}
+
+      {/* Ambient glow behind modal */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+        style={{
+          width: 520,
+          height: 520,
+          background:
+            "radial-gradient(ellipse at center, rgba(124,111,255,0.12) 0%, transparent 65%)",
+        }}
+      />
+
+      {/* Glass modal */}
+      <div
+        className="relative z-10 w-full max-w-[420px] mx-4 overflow-hidden rounded-[18px] border"
+        style={{
+          background: "rgba(15,15,18,0.75)",
+          borderColor: "rgba(124,111,255,0.25)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          boxShadow:
+            "0 0 0 1px rgba(124,111,255,0.1), 0 32px 64px rgba(0,0,0,0.6), 0 0 80px rgba(124,111,255,0.06)",
+        }}
+      >
+        <TerminalHeader />
+
+        <div className="px-7 pb-8 pt-7">
+          {view === "login" ? (
+            <LoginForm onSwitch={() => setView("register")} />
+          ) : (
+            <RegisterForm onSwitch={() => setView("login")} />
+          )}
+        </div>
+      </div>
+
+      <StatsTicker />
+
+      <style>{`
+        @keyframes gaj-float-card {
+          0% { transform: translateY(0px); }
+          100% { transform: translateY(-14px); }
+        }
+        @keyframes gaj-blink-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ── Login Form ───────────────────────────────────────────────────────────────
-function LoginForm() {
+function LoginForm({ onSwitch }: { onSwitch: () => void }) {
   const navigate = useNavigate();
   const login = useLogin();
   const [email, setEmail] = useState("");
@@ -172,62 +232,133 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-[12px] font-medium text-[#7a7a85]">Email</Label>
-        <Input
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          autoFocus
-          className="border-white/[0.07] bg-[#1a1a1d] h-[40px] text-[13px] text-[#ececec] placeholder:text-[#4a4a55] focus-visible:border-[#7c6fff]/40 focus-visible:ring-0 rounded-[8px]"
-        />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div>
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#ececec]">
+          Welcome back
+        </h1>
+        <p className="mt-1.5 text-[13px] text-[#7a7a85]">
+          Sign in to continue your job hunt.
+        </p>
       </div>
 
+      {/* Email */}
       <div className="flex flex-col gap-1.5">
-        <Label className="text-[12px] font-medium text-[#7a7a85]">Password</Label>
+        <Label className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[#4a4a55]">
+          Email
+        </Label>
         <div className="relative">
+          <Mail
+            size={14}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a4a55]"
+          />
+          <Input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoFocus
+            className="h-[44px] rounded-[10px] border-white/[0.07] bg-white/[0.04] pl-10 text-[13px] text-[#ececec] placeholder:text-[#4a4a55] transition-all focus-visible:border-[#7c6fff]/50 focus-visible:bg-white/[0.06] focus-visible:ring-0 focus-visible:ring-[#7c6fff]/20"
+          />
+        </div>
+      </div>
+
+      {/* Password */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[#4a4a55]">
+            Password
+          </Label>
+          <button
+            type="button"
+            tabIndex={-1}
+            className="text-[11px] text-[#7c6fff] hover:text-[#a78bfa]"
+          >
+            Forgot password?
+          </button>
+        </div>
+        <div className="relative">
+          <Lock
+            size={14}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a4a55]"
+          />
           <Input
             type={showPass ? "text" : "password"}
-            placeholder="••••••••"
+            placeholder="••••••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="border-white/[0.07] bg-[#1a1a1d] h-[40px] text-[13px] pr-10 text-[#ececec] placeholder:text-[#4a4a55] focus-visible:border-[#7c6fff]/40 focus-visible:ring-0 rounded-[8px]"
+            className="h-[44px] rounded-[10px] border-white/[0.07] bg-white/[0.04] pl-10 pr-10 text-[13px] text-[#ececec] placeholder:text-[#4a4a55] transition-all focus-visible:border-[#7c6fff]/50 focus-visible:bg-white/[0.06] focus-visible:ring-0"
           />
           <button
             type="button"
             onClick={() => setShowPass((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a4a55] hover:text-[#7a7a85]"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4a4a55] hover:text-[#7a7a85]"
           >
             {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
       </div>
 
+      {/* Submit */}
       <Button
         type="submit"
         disabled={login.isPending}
-        className="mt-2 w-full h-[40px] gap-2 rounded-full bg-[#7c6fff] text-[13px] font-medium text-white hover:bg-[#8c7fff]"
-        style={{ boxShadow: "0 4px 14px rgba(124,111,255,0.3)" }}
+        className="mt-1 flex h-[44px] w-full items-center justify-center gap-2 rounded-[10px] text-[13px] font-semibold text-white"
+        style={{
+          background: "linear-gradient(135deg, #7c6fff 0%, #9d8fff 100%)",
+          boxShadow: "0 4px 16px rgba(124,111,255,0.35), 0 1px 0 rgba(255,255,255,0.12) inset",
+        }}
       >
         {login.isPending ? (
           <>
             <Loader2 size={14} className="animate-spin" />
-            Logging in…
+            Signing in…
           </>
         ) : (
-          "Log in to dashboard"
+          <>
+            Sign in
+            <ArrowRight size={14} />
+          </>
         )}
       </Button>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-white/[0.07]" />
+        <span className="text-[11px] text-[#4a4a55]">OR</span>
+        <div className="h-px flex-1 bg-white/[0.07]" />
+      </div>
+
+      {/* GitHub */}
+      <button
+        type="button"
+        className="flex h-[44px] w-full items-center justify-center gap-2.5 rounded-[10px] border border-white/[0.09] bg-white/[0.04] text-[13px] font-medium text-[#ececec] transition-colors hover:border-white/[0.15] hover:bg-white/[0.07]"
+      >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" className="text-[#ececec]">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        Continue with GitHub
+      </button>
+
+      {/* Switch */}
+      <p className="text-center text-[13px] text-[#7a7a85]">
+        New here?{" "}
+        <button
+          type="button"
+          onClick={onSwitch}
+          className="font-semibold text-[#7c6fff] hover:text-[#a78bfa]"
+        >
+          Create an account
+        </button>
+      </p>
     </form>
   );
 }
 
 // ── Register Form ────────────────────────────────────────────────────────────
-function RegisterForm() {
+function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
   const navigate = useNavigate();
   const register = useRegister();
   const [name, setName] = useState("");
@@ -247,48 +378,70 @@ function RegisterForm() {
     }
   }
 
+  const inputCls =
+    "h-[44px] rounded-[10px] border-white/[0.07] bg-white/[0.04] text-[13px] text-[#ececec] placeholder:text-[#4a4a55] transition-all focus-visible:border-[#7c6fff]/50 focus-visible:bg-white/[0.06] focus-visible:ring-0";
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#ececec]">
+          Create an account
+        </h1>
+        <p className="mt-1.5 text-[13px] text-[#7a7a85]">
+          Set up your profile once. Apply to dozens automatically.
+        </p>
+      </div>
+
       <div className="flex flex-col gap-1.5">
-        <Label className="text-[12px] font-medium text-[#7a7a85]">Full Name</Label>
+        <Label className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[#4a4a55]">
+          Full Name
+        </Label>
         <Input
           type="text"
           placeholder="Jane Doe"
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoFocus
-          className="border-white/[0.07] bg-[#1a1a1d] h-[40px] text-[13px] text-[#ececec] placeholder:text-[#4a4a55] focus-visible:border-[#7c6fff]/40 focus-visible:ring-0 rounded-[8px]"
+          className={inputCls}
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label className="text-[12px] font-medium text-[#7a7a85]">Email</Label>
-        <Input
-          type="email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="border-white/[0.07] bg-[#1a1a1d] h-[40px] text-[13px] text-[#ececec] placeholder:text-[#4a4a55] focus-visible:border-[#7c6fff]/40 focus-visible:ring-0 rounded-[8px]"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label className="text-[12px] font-medium text-[#7a7a85]">Password</Label>
+        <Label className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[#4a4a55]">
+          Email
+        </Label>
         <div className="relative">
+          <Mail size={14} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a4a55]" />
+          <Input
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={`${inputCls} pl-10`}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-[11px] font-semibold uppercase tracking-[0.07em] text-[#4a4a55]">
+          Password
+        </Label>
+        <div className="relative">
+          <Lock size={14} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4a4a55]" />
           <Input
             type={showPass ? "text" : "password"}
-            placeholder="••••••••"
+            placeholder="Min. 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={8}
-            className="border-white/[0.07] bg-[#1a1a1d] h-[40px] text-[13px] pr-10 text-[#ececec] placeholder:text-[#4a4a55] focus-visible:border-[#7c6fff]/40 focus-visible:ring-0 rounded-[8px]"
+            className={`${inputCls} pl-10 pr-10`}
           />
           <button
             type="button"
             onClick={() => setShowPass((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4a4a55] hover:text-[#7a7a85]"
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4a4a55] hover:text-[#7a7a85]"
           >
             {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
@@ -298,8 +451,11 @@ function RegisterForm() {
       <Button
         type="submit"
         disabled={register.isPending}
-        className="mt-2 w-full h-[40px] gap-2 rounded-full bg-[#7c6fff] text-[13px] font-medium text-white hover:bg-[#8c7fff]"
-        style={{ boxShadow: "0 4px 14px rgba(124,111,255,0.3)" }}
+        className="mt-1 flex h-[44px] w-full items-center justify-center gap-2 rounded-[10px] text-[13px] font-semibold text-white"
+        style={{
+          background: "linear-gradient(135deg, #7c6fff 0%, #9d8fff 100%)",
+          boxShadow: "0 4px 16px rgba(124,111,255,0.35), 0 1px 0 rgba(255,255,255,0.12) inset",
+        }}
       >
         {register.isPending ? (
           <>
@@ -307,9 +463,23 @@ function RegisterForm() {
             Creating account…
           </>
         ) : (
-          "Create account"
+          <>
+            Get started
+            <ArrowRight size={14} />
+          </>
         )}
       </Button>
+
+      <p className="text-center text-[13px] text-[#7a7a85]">
+        Already have an account?{" "}
+        <button
+          type="button"
+          onClick={onSwitch}
+          className="font-semibold text-[#7c6fff] hover:text-[#a78bfa]"
+        >
+          Log in
+        </button>
+      </p>
     </form>
   );
 }

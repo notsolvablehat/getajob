@@ -52,7 +52,7 @@ export function useTaskStatus(taskId: string | null) {
     refetchInterval: (query) => {
       // Stop polling when task is complete
       if (query.state.data?.is_complete) return false;
-      return 2000;
+      return 10_000; // poll every 10 seconds
     },
   });
 }

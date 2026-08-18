@@ -46,7 +46,7 @@ export function useJobs(filters: JobFilters = {}) {
   const params = new URLSearchParams();
   if (filters.company) params.set("company", filters.company);
   params.set("page", String(filters.page ?? 1));
-  params.set("size", String(filters.size ?? 50));
+  params.set("size", String(filters.size ?? 10));
 
   return useQuery({
     queryKey: [...JOBS_QUERY_KEY, filters],
@@ -76,5 +76,27 @@ export function useCompanies() {
   return useQuery({
     queryKey: ["companies"],
     queryFn: () => api.get<string[]>("/api/scraper/companies"),
+  });
+}
+
+/** Fetch a single job — tries query cache first, falls back to a fresh page fetch. */
+export function useJob(jobId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ["job", jobId],
+    enabled: !!jobId,
+    queryFn: async () => {
+      // Try all cached pages first
+      const cached = queryClient.getQueriesData<PaginatedJobs>({
+        queryKey: JOBS_QUERY_KEY,
+      });
+      for (const [, data] of cached) {
+        const found = data?.items?.find((j) => j.id === jobId);
+        if (found) return found;
+      }
+      // Not in cache — fetch a broad page
+      const all = await api.get<PaginatedJobs>(`/api/scraper/jobs?size=100`);
+      return all.items.find((j) => j.id === jobId) ?? null;
+    },
   });
 }
