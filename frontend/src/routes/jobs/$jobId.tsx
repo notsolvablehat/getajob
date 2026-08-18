@@ -20,6 +20,7 @@ import { useApplySingle } from "@/hooks/useApply";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { Navbar } from "@/components/layout/Navbar";
 
 export const Route = createFileRoute("/jobs/$jobId")({
   beforeLoad: () => {
@@ -131,59 +132,17 @@ function JobDetailPage() {
 
   return (
     <div style={{ background: "#0d0d0f", minHeight: "100vh" }}>
-      {/* Sticky top bar */}
-      <div
-        className="sticky top-0 z-40 flex h-14 items-center justify-between gap-4 border-b border-white/[0.07] px-6"
-        style={{
-          background: "rgba(13,13,15,0.90)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-        }}
-      >
+      <Navbar />
+
+      {/* Body */}
+      <main className="mx-auto max-w-[760px] px-6 py-10">
         <Link
           to="/dashboard"
-          className="flex items-center gap-1.5 text-[13px] text-[#7a7a85] transition-colors hover:text-[#ececec]"
+          className="mb-6 flex w-fit items-center gap-1.5 text-[13px] text-[#7a7a85] transition-colors hover:text-[#ececec]"
         >
           <ArrowLeft size={14} />
           Home
         </Link>
-
-        {job && (
-          <div className="flex items-center gap-2">
-            {/* View Job */}
-            <a
-              href={job.job_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-[30px] items-center gap-1.5 rounded-full border border-white/[0.11] bg-[#212126] px-3 text-[12px] text-[#7a7a85] transition-colors hover:border-white/[0.2] hover:text-[#ececec]"
-            >
-              View Job
-              <ExternalLink size={11} />
-            </a>
-
-            {/* Apply button */}
-            {(job.status === "NOT_STARTED" || job.status === "FAILED") && (
-              <Button
-                size="sm"
-                onClick={handleApply}
-                disabled={applying}
-                className="h-[30px] gap-1.5 rounded-full bg-[#7c6fff] px-3 text-[12px] text-white hover:bg-[#8c7fff]"
-                style={{ boxShadow: "0 2px 10px rgba(124,111,255,0.25)" }}
-              >
-                {applying ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Play size={12} />
-                )}
-                {job.status === "FAILED" ? "Retry" : "Apply"}
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Body */}
-      <main className="mx-auto max-w-[760px] px-6 py-10">
         {isLoading ? (
           <JobDetailSkeleton />
         ) : error || !job ? (
@@ -217,9 +176,40 @@ function JobDetailPage() {
                 );
               })()}
 
-              <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-tight text-[#ececec]">
-                {job.title}
-              </h1>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
+                <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-[#ececec]">
+                  {job.title}
+                </h1>
+                
+                <div className="flex items-center gap-2">
+                  <a
+                    href={job.job_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-[30px] items-center gap-1.5 rounded-full border border-white/[0.11] bg-[#212126] px-3 text-[12px] text-[#7a7a85] transition-colors hover:border-white/[0.2] hover:text-[#ececec]"
+                  >
+                    View Job
+                    <ExternalLink size={11} />
+                  </a>
+
+                  {(job.status === "NOT_STARTED" || job.status === "FAILED") && (
+                    <Button
+                      size="sm"
+                      onClick={handleApply}
+                      disabled={applying}
+                      className="h-[30px] gap-1.5 rounded-full bg-[#7c6fff] px-3 text-[12px] text-white hover:bg-[#8c7fff]"
+                      style={{ boxShadow: "0 2px 10px rgba(124,111,255,0.25)" }}
+                    >
+                      {applying ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Play size={12} />
+                      )}
+                      {job.status === "FAILED" ? "Retry" : "Apply"}
+                    </Button>
+                  )}
+                </div>
+              </div>
 
               {/* Meta row */}
               <div className="mt-3 flex flex-wrap items-center gap-4 text-[13px] text-[#7a7a85]">

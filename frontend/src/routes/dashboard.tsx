@@ -64,7 +64,6 @@ function DashboardPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Apply
-  const [applyingJobIds] = useState<Set<string>>(new Set());
   const [isAutomating, setIsAutomating] = useState(false);
 
   // Queries
@@ -323,8 +322,6 @@ function DashboardPage() {
 
         <JobList
           jobs={jobs}
-          applyingJobIds={applyingJobIds}
-          onApply={() => {}} // single-apply handled on job detail page
           filterStatus={filterStatus}
           search={search}
           filterCompany={filterCompany}

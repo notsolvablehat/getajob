@@ -146,10 +146,7 @@ export function Navbar({
     >
       {/* Logo */}
       <Link to="/" className="flex shrink-0 items-center gap-2">
-        <div
-          className="h-[7px] w-[7px] rounded-full bg-[#7c6fff]"
-          style={{ boxShadow: "0 0 8px rgba(124,111,255,0.4)" }}
-        />
+        <img src="/icons8-hard-working-94.png" alt="GetaJob Icon" className="h-6 w-6" />
         <span className="text-[15px] font-semibold tracking-tight text-[#ececec]">
           GetaJob
         </span>

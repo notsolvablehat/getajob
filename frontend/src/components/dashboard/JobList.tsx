@@ -135,8 +135,6 @@ export function SkeletonList() {
 // ── Populated list ───────────────────────────────────────────────────────────
 interface JobListProps {
   jobs: Job[];
-  applyingJobIds: Set<string>;
-  onApply: (jobId: string) => void;
   filterStatus: JobStatus | "ALL";
   search: string;
   filterCompany: string;
@@ -150,8 +148,6 @@ interface JobListProps {
 
 export function JobList({
   jobs,
-  applyingJobIds,
-  onApply,
   filterStatus,
   search,
   filterCompany,
@@ -211,8 +207,6 @@ export function JobList({
         <JobRow
           key={job.id}
           job={job}
-          onApply={onApply}
-          isApplying={applyingJobIds.has(job.id)}
           selectionMode={selectionMode}
           selected={selectedIds.has(job.id)}
           selectionDisabled={maxSelected && !selectedIds.has(job.id)}

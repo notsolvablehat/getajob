@@ -1,8 +1,7 @@
-import { ExternalLink, AlertCircle, Loader2, Image } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { ExternalLink, AlertCircle, Image } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import type { Job, JobStatus } from "@/hooks/useJobs";
-import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
 interface StatusConfig {
@@ -44,8 +43,6 @@ const STATUS_CONFIG: Record<JobStatus, StatusConfig> = {
 
 interface JobRowProps {
   job: Job;
-  onApply?: (jobId: string) => void;
-  isApplying?: boolean;
   // Selection mode
   selectionMode?: boolean;
   selected?: boolean;
@@ -55,8 +52,6 @@ interface JobRowProps {
 
 export function JobRow({
   job,
-  onApply,
-  isApplying = false,
   selectionMode = false,
   selected = false,
   selectionDisabled = false,
@@ -64,8 +59,20 @@ export function JobRow({
 }: JobRowProps) {
   const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.NOT_STARTED;
   const isFailed = job.status === "FAILED";
-  const isProcessing = job.status === "PROCESSING";
-  const canApply = job.status === "NOT_STARTED" || job.status === "FAILED";
+  const navigate = useNavigate();
+
+  function handleRowClick(e: React.MouseEvent) {
+    // Prevent triggering if clicking an internal link/button
+    if ((e.target as HTMLElement).closest("a, button, input")) return;
+    
+    if (selectionMode) {
+      if (!selectionDisabled || selected) {
+        onToggle?.(job.id);
+      }
+    } else {
+      navigate({ to: "/jobs/$jobId", params: { jobId: job.id } });
+    }
+  }
 
   async function handleScreenshotClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -84,7 +91,8 @@ export function JobRow({
 
   return (
     <div
-      className={`group flex items-center justify-between gap-4 border-b border-white/[0.07] px-[18px] py-[14px] transition-colors duration-100 last:border-b-0 ${
+      onClick={handleRowClick}
+      className={`group flex items-center justify-between gap-4 border-b border-white/[0.07] px-[18px] py-[14px] transition-colors duration-100 last:border-b-0 cursor-pointer ${
         selected
           ? "bg-[rgba(124,111,255,0.06)]"
           : isFailed
@@ -201,45 +209,6 @@ export function JobRow({
             View Job
             <ExternalLink size={10} />
           </a>
-
-          {/* Apply / Retry button */}
-          {canApply && (
-            <Button
-              size="sm"
-              onClick={() => onApply?.(job.id)}
-              disabled={isApplying || isProcessing}
-              className={`h-[28px] rounded-full px-3 text-[12px] ${
-                job.status === "NOT_STARTED"
-                  ? "bg-[#7c6fff] text-white hover:bg-[#8c7fff]"
-                  : "border border-white/[0.11] bg-[#212126] text-[#7a7a85] hover:bg-[#1a1a1d] hover:text-[#ececec]"
-              }`}
-              style={
-                job.status === "NOT_STARTED"
-                  ? { boxShadow: "0 2px 8px rgba(124,111,255,0.2)" }
-                  : { boxShadow: "none" }
-              }
-            >
-              {isApplying ? (
-                <Loader2 size={11} className="animate-spin" />
-              ) : job.status === "FAILED" ? (
-                "Retry"
-              ) : (
-                "Apply"
-              )}
-            </Button>
-          )}
-
-          {isProcessing && (
-            <Button
-              size="sm"
-              disabled
-              className="h-[28px] rounded-full border border-white/[0.11] bg-[#212126] px-3 text-[12px] text-[#7a7a85] opacity-40"
-              style={{ boxShadow: "none" }}
-            >
-              <Loader2 size={11} className="animate-spin" />
-              Applying…
-            </Button>
-          )}
         </div>
       )}
 
