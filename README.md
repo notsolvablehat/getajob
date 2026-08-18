@@ -75,6 +75,16 @@ Before setting up the project, ensure you have the following installed:
    ```
    The frontend will be available at `http://localhost:5173`.
 
+## How to Run Tests
+
+The backend includes a `pytest` test suite to verify data parsing and task management logic.
+
+To run the tests, ensure you are in the `backend` directory and run:
+```bash
+cd backend
+PYTHONPATH=. uv run pytest tests/
+```
+
 ## How to Run the Scraper
 
 To scrape jobs for a specific company from Greenhouse:

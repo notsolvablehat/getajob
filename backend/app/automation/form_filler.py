@@ -17,11 +17,11 @@ async def fill_greenhouse_form(page: Page, profile: dict, resume_path: str) -> d
             parts = full_name.split(" ", 1)
             first = parts[0]
             last = parts[1] if len(parts) > 1 else ""
-            
+
             first_name_input = page.get_by_role("textbox", name="First Name", exact=False)
             if await first_name_input.count() > 0:
                 await first_name_input.first.fill(first)
-            
+
             last_name_input = page.get_by_role("textbox", name="Last Name", exact=False)
             if last and await last_name_input.count() > 0:
                 await last_name_input.first.fill(last)
@@ -60,7 +60,7 @@ async def fill_greenhouse_form(page: Page, profile: dict, resume_path: str) -> d
                 file_input = resume_container.locator("input[type='file']")
                 if await file_input.count() > 0:
                     await file_input.first.set_input_files(resume_path)
-                    
+
                     # Wait for upload indicator to confirm it's done
                     filename = os.path.basename(resume_path)
                     try:
@@ -76,7 +76,7 @@ async def fill_greenhouse_form(page: Page, profile: dict, resume_path: str) -> d
         # 6. Submit Application
         submit_btn = page.get_by_role("button", name="Submit application", exact=False)
         if await submit_btn.count() > 0:
-            await submit_btn.first.click()
+            # await submit_btn.first.click()
             # Wait a bit for navigation or confirmation to start
             await asyncio.sleep(3)
         else:
