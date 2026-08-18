@@ -2,7 +2,7 @@
 backend/.venv
 backend/.env
 backend/node_modules
-
+backend/user-data
 
 frontend/.env
 frontend/node_modules
